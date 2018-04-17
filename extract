@@ -1,0 +1,29 @@
+#!/bin/bash
+
+EXCONFIG=$(cat <<EOF
+%Image::ExifTool::UserDefined = (
+    'Image::ExifTool::XMP::xmp' => {
+        data1 => { Name => 'data1', Writable => 'string' },
+        data2 => { Name => 'data2', Writable => 'string' },
+        data3 => { Name => 'data3', Writable => 'string' },
+        data4 => { Name => 'data4', Writable => 'string' },
+        data5 => { Name => 'data5', Writable => 'string' }
+    },
+);
+EOF
+)
+
+CMD="-xmp-xmp:data1"
+CMD="$CMD -xmp-xmp:data2"
+CMD="$CMD -xmp-xmp:data3"
+CMD="$CMD -xmp-xmp:data4"
+CMD="$CMD -xmp-xmp:data5"
+
+EXIFTOOL="exiftool"
+
+tmpfile=$(mktemp)
+echo "$EXCONFIG" > "$tmpfile"
+DATA=$("$EXIFTOOL" -config "$tmpfile" -b $CMD "$1")
+rm "$tmpfile"
+
+echo $DATA | base64 -d -

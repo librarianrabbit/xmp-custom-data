@@ -1,0 +1,33 @@
+#!/bin/bash
+
+GIF1=$(cat "$2")
+GIF2=$(cat "$3")
+GIF3=$(cat "$4")
+GIF4=$(cat "$5")
+GIF5=$(cat "$6")
+
+EXCONFIG=$(cat <<EOF
+%Image::ExifTool::UserDefined = (
+    'Image::ExifTool::XMP::xmp' => {
+        data1 => { Name => 'data1', Writable => 'string' },
+        data2 => { Name => 'data2', Writable => 'string' },
+        data3 => { Name => 'data3', Writable => 'string' },
+        data4 => { Name => 'data4', Writable => 'string' },
+        data5 => { Name => 'data5', Writable => 'string' }
+    },
+);
+EOF
+)
+
+CMD="-xmp-xmp:data1=$GIF1"
+CMD="$CMD -xmp-xmp:data2=$GIF2"
+CMD="$CMD -xmp-xmp:data3=$GIF3"
+CMD="$CMD -xmp-xmp:data4=$GIF4"
+CMD="$CMD -xmp-xmp:data5=$GIF5"
+
+EXIFTOOL="exiftool"
+
+tmpfile=$(mktemp)
+echo "$EXCONFIG" > "$tmpfile"
+"$EXIFTOOL" -config "$tmpfile" $CMD "$1"
+rm "$tmpfile"
