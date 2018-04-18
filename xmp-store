@@ -1,0 +1,124 @@
+#!/bin/bash
+
+#
+# MIT License
+#
+# Copyright (c) 2018 librarianrabbit
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+# WARNING: XMP does not support binary files directly.
+# Use base64 encoded files if possible.
+#
+# WARNING: Most websites and tools might remove the entire XMP metadata or the unknown/custom tags.
+# Keep backups of *everything*.
+
+EXIFTAG="data"
+EXIFTAGTYPE="string"
+
+function show_usage () {
+	echo ""
+	echo "Usage: xmp-store \"image.jpg\" textfile-01.txt textfile-02.txt"
+	echo "Or: xmp-store \"image.jpg\" textfile-*.txt"
+	echo ""
+	echo "This tool adds files into XMP metadata with custom tags. Binary files aren't supported."
+	echo "WARNING: All previous XMP metadata is permanently deleted. Please backup all related files."
+	echo ""
+	echo "Dependencies: exiftool"
+	echo ""
+}
+
+# Tools and paths
+EXIFTOOL="exiftool"
+EXIFREMOVETOOL="./xmp-remove"
+
+if [ "$#" -lt "1" ]; then
+	echo "ERROR: Image filename not provided."
+	show_usage
+	exit 1
+fi
+
+# File: First parameter.
+FILE="$1"
+shift
+
+if [ ! -f "$FILE" ]; then
+	echo "ERROR: The image filename provided does not exists."
+	exit 1
+fi
+
+if [ "$#" -lt "1" ]; then
+	echo "ERROR: No input files were provided."
+	echo "Nothing to do."
+	show_usage
+	exit 1
+fi
+
+# Build parameters and temporary config.
+#
+# Loops through the remaining parameters.
+# These parameters expects file names which content will be added into the image's XMP metadata with custom tags.
+#
+# The parameter is based on:
+# -xmp-xmp::data{index}<={filename}
+#
+# Where {index} gets increased by one for each file, starting on 1 for the first file.
+# And {file} expects a filename. The content is read by exiftool and added as the tag value.
+# One argument is generated per file provided.
+#
+# The temporary config is based on:
+# data{index} => { Name => 'data{index}', Writable => 'undef' }
+# Where data{index} will be the tag name utilized. Example: data1, data2, data3, ...
+# One custom tag for each file provided, following the pattern:
+# {exiftag}{index} - Example: data1, hidden2, raw3, ...
+CMD=""
+CFG=""
+
+index=1
+
+for filename in "$@"
+do
+	if [ ! -f "$filename" ]; then
+		echo "WARNING: Ignoring \"$filename\". Reason: File does not exists."
+	elif file -i "$filename" | grep -q text; then
+		CMD="$CMD -xmp-xmp::data$index<=$filename"
+		CFG="$CFG $EXIFTAG$index => { Name => '$EXIFTAG$index', Writable => '$EXIFTAGTYPE' },"
+		(( ++index ))
+	else
+		echo "WARNING: Ignoring \"$filename\". Reason: Binary files aren't supported by XMP metadata."
+	fi
+done
+
+if [ "$index" -le "1" ]; then
+	echo "ERROR: No valid input files provided."
+	echo "Nothing to do."
+	show_usage
+	exit 1
+fi
+
+# Remove trailing comma.
+CFG=$(echo "$CFG" | rev | cut -c2- | rev)
+
+# Temporary config template.
+# The actual custom tags are defined by $CFG explained previously in the file.
+EXCONFIG=$(cat <<EOF
+%Image::ExifTool::UserDefined = (
+	'Image::ExifTool::XMP::xmp' => {
+		$CFG
+	},
+);
+EOF
+)
+
+# Remove previous xmp tag.
+# WARNING: ALL xmp tags are removed, even the standard ones.
+"$EXIFREMOVETOOL" "$FILE"
+
+# Calls exiftool with the temporary config and parameters
+# to edit the metadata of the image provided as first parameter.
+echo "$EXCONFIG" | "$EXIFTOOL" -config /dev/stdin $CMD "$FILE"
