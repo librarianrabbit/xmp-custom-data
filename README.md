@@ -13,13 +13,13 @@ xmp-store *image.jpg* textfile-\*.txt
 ### xmp-extract
 The file [xmp-extract](xmp-extract) is the second most important script. Its function is to retrieve the files and concatenate them, in the order they are present on the file, that is, the order handled by exiftool. The XMP tags are defined by the EXIFTAG shell variable, on the script.
 
-Usage:
+Usage:  
 xmp-extract *image.jpg*
 
 ### xmp-remove
 The file [xmp-remove](xmp-emove) is a utility script that removes *all* XMP tags from an image. This is used to avoid the case in where old files, with higher amount, would be mixed with new files with less parts due to the current method.
 
-Usage:
+Usage:  
 xmp-remove *image.jpg*
 
 ## To-do and future enhancements
