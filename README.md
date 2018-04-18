@@ -1,5 +1,5 @@
 # xmp-custom-data
-A project that aims to offer tools for storing, extracting and removing files from a image's XMP metadata by interfacing with [ExifTool](https://www.sno.phy.queensu.ca/~phil/exiftool/) .
+A project that aims to offer tools for storing, extracting and removing files from a image's XMP metadata by interfacing with [ExifTool](https://www.sno.phy.queensu.ca/~phil/exiftool/).
 
 The project is divided between three bash scripts, intended to run on Linux systems with the bash shell script interpreter.
 
