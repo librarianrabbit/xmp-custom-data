@@ -6,7 +6,7 @@ The project is divided between three bash scripts, intended to run on Linux syst
 ### xmp-store
 The file [xmp-store](xmp-store) is the main script of the project. Its function is to store any given number of files (parts of a big file) into a image's XMP metadata on custom tags defined by the EXIFTAG shell variable, which is named *data* by default.
 
-Usage:
+Usage:  
 xmp-store *image.jpg* textfile-01.txt textfile-02.txt  
 xmp-store *image.jpg* textfile-\*.txt
 
